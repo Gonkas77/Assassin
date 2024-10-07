@@ -1,0 +1,27 @@
+name: Assassins
+version: '0.0.12-beta'
+main: me.gonkas.assassin.Assassins
+api-version: '1.21'
+commands:
+  startgame:
+    default: false
+  stopgame:
+    default: false
+  pausegame:
+    default: false
+  resumegame:
+    default: false
+  setassassin:
+    default: false
+  setparticipant:
+    default: false
+  removeparticipant:
+    default: false
+  getassassin:
+    default: false
+  getparticipants:
+    default: false
+  printtimers:
+    default: false
+  decrementtimer:
+    default: false

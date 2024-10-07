@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Assassins_0.0.12-beta">
+    <output-path>$USER_HOME$/Desktop/My Private Servers/1.21/plugins</output-path>
+    <root id="archive" name="Assassins_0.0.12-beta.jar">
+      <element id="module-output" name="Assassin" />
+    </root>
+  </artifact>
+</component>
