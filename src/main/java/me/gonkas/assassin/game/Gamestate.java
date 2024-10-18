@@ -19,7 +19,6 @@ public class Gamestate {
 
         Assassins.TIMER = new Timer(Timers.HUNT);
 
-        Assassins.TEAMPARTICIPANTS.setAllowFriendlyFire(true);
         Assassins.GAMESTATE = Gamestates.HUNTING;
     }
 
@@ -38,19 +37,18 @@ public class Gamestate {
                     p.getInventory().addItem(Assassins.TRACKER);
         });
 
-        Assassins.TEAMPARTICIPANTS.setAllowFriendlyFire(true);
         Assassins.GAMESTATE = Gamestates.DUELING;
     }
 
     public static void huntingToGrace(boolean killAssassin) {
         if (killAssassin) {Assassins.ASSASSIN.damage(1000, getCustomDamageSource(Assassins.ASSASSIN));}
+        else {Assassins.TIMER.endTimer();} // only forcibly end the timer if the assassin killed someone
 
         Assassins.sendServerChat("§cThis round the Assassin was §4" + Assassins.ASSASSIN.getName() + "§c.");
 
         Assassins.TIMER = new Timer(Timers.GRACE);
         Game.rollNewAssassin(false);
 
-        Assassins.TEAMPARTICIPANTS.setAllowFriendlyFire(false);
         Assassins.GAMESTATE = Gamestates.GRACE;
     }
 

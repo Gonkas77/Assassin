@@ -22,11 +22,7 @@ public class Game {
 
     public static void startGame() {
 
-        Assassins.TEAMPARTICIPANTS = Assassins.SCOREBOARD.registerNewTeam("Participants");
         Assassins.PARTICIPANTS = Assassins.getParticipants();
-
-        Assassins.PARTICIPANTS.forEach(p -> Assassins.TEAMPARTICIPANTS.addPlayer(p)); // put all participants on a team
-        Assassins.TEAMPARTICIPANTS.setAllowFriendlyFire(false);
 
         Game.rollNewAssassin(false);
         Assassins.sendServerChat("§eThe Assassins game has started. You have 5 minutes of Grace until an Assassin is selected.");
@@ -44,8 +40,6 @@ public class Game {
         Assassins.TIMER = new Timer(Timers.GRACE);
 
         Assassins.WORLDS = (ArrayList<World>) Bukkit.getWorlds();
-        Assassins.SCOREBOARDMANAGER = Bukkit.getScoreboardManager();
-        Assassins.SCOREBOARD = Assassins.SCOREBOARDMANAGER.getNewScoreboard();
 
         Assassins.sendServerChat("§cStopped Assassins.");
     }
@@ -60,8 +54,10 @@ public class Game {
             w.setGameRule(GameRule.RANDOM_TICK_SPEED, 0);
         });
 
-        Assassins.PARTICIPANTS.forEach(p -> Assassins.PARTICIPANTLOCATIONS.put(p, p.getLocation()));
-        Assassins.TEAMPARTICIPANTS.setAllowFriendlyFire(false);
+        Assassins.PARTICIPANTS.forEach(p -> {
+            Assassins.PARTICIPANTLOCATIONS.put(p, p.getLocation());
+            p.setGameMode(GameMode.ADVENTURE);
+        });
 
         Assassins.sendServerChat("§aThe game has been paused! Please wait while the Hosts handle the situation.");
         Assassins.STATEBEFOREPAUSE = Assassins.GAMESTATE;
@@ -73,7 +69,7 @@ public class Game {
         BOOLEANRULES.forEach((w, e) -> e.forEach(w::setGameRule));
         INTEGERRULES.forEach((w, e) -> e.forEach(w::setGameRule));
 
-        Assassins.TEAMPARTICIPANTS.setAllowFriendlyFire(true);
+        Assassins.PARTICIPANTS.forEach(p -> p.setGameMode(GameMode.SURVIVAL));
 
         Assassins.sendServerChat("§aThe game has been resumed.");
         Assassins.GAMESTATE = Assassins.STATEBEFOREPAUSE;
@@ -84,7 +80,7 @@ public class Game {
 
         ArrayList<Player> participants = new ArrayList<>(Assassins.getParticipants());
         if (lastAssassin != null) {
-            lastAssassin.getInventory().remove(createTracker());
+            removeTrackerFromInventory(lastAssassin);
             participants.remove(lastAssassin);
         }
 
@@ -96,7 +92,7 @@ public class Game {
 
     // forces a player as an assassin
     public static void rollNewAssassin(Player player, boolean updateAssassin) {
-        Assassins.ASSASSIN.getInventory().remove(Assassins.TRACKER);
+        removeTrackerFromInventory(player);
         Assassins.ASSASSIN = player;
 
         // updates only if it is not grace period
@@ -105,7 +101,7 @@ public class Game {
 
     public static void updateAssassin() {
         Assassins.ASSASSIN.sendTitle("§cAssassin!", "Kill someone within 15 minutes.", 10, 30, 10);
-        Assassins.ASSASSIN.sendMessage("§cYou are the new Assassin! Kill someone within 15 minutes.");
+        Assassins.ASSASSIN.sendMessage("§cYou are the new §lAssassin§r§c! Kill someone within 15 minutes.");
         Assassins.ASSASSIN.playSound(
                 Assassins.ASSASSIN,
                 Sound.ENTITY_WITHER_SPAWN,
@@ -127,13 +123,13 @@ public class Game {
     }
 
     public static boolean isTracker(ItemStack item) {
-        if (item == null || !item.getItemMeta().hasEnchantmentGlintOverride()) {return false;}
+        if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasEnchantmentGlintOverride()) {return false;}
         return item.getType() == Material.COMPASS && item.getItemMeta().getEnchantmentGlintOverride();
     }
 
     public static List<PotionEffect> getPauseEffects() {
         return List.of(
-                new PotionEffect(PotionEffectType.BLINDNESS, 60, 255, true, false),
+                new PotionEffect(PotionEffectType.BLINDNESS, 30, 255, true, false),
                 new PotionEffect(PotionEffectType.RESISTANCE, 30, 255, true, false),
                 new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 30, 255, true, false)
         );
@@ -174,5 +170,11 @@ public class Game {
         rules.put(GameRule.MOB_GRIEFING,                   false);
         rules.put(GameRule.PROJECTILES_CAN_BREAK_BLOCKS,   false);
         return rules;
+    }
+
+    public static Player removeTrackerFromInventory(Player player) {
+        player.getInventory().forEach(itemStack -> {
+            if (isTracker(itemStack)) {player.getInventory().remove(itemStack);}
+        }); return player;
     }
 }

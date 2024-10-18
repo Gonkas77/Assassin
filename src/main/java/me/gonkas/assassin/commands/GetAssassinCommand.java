@@ -14,7 +14,7 @@ public class GetAssassinCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        sender.sendMessage("§aThe §l§2Assassin§r is §f" + Assassins.ASSASSIN.name() + "§a.");
+        sender.sendMessage("§aThe §l§2Assassin§r is §f" + Assassins.ASSASSIN.getName() + "§a.");
         return true;
     }
 

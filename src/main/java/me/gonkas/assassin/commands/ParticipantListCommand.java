@@ -15,7 +15,7 @@ public class ParticipantListCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         sender.sendMessage("§aThe participants are the following:");
-        Assassins.PARTICIPANTS.forEach(p -> sender.sendMessage("§a- " + p.name()));
+        Assassins.PARTICIPANTS.forEach(p -> sender.sendMessage("§a- " + p.getName()));
         return true;
     }
 

@@ -5,12 +5,17 @@ import me.gonkas.assassin.game.Gamestate;
 import me.gonkas.assassin.game.Gamestates;
 import org.bukkit.GameMode;
 import org.bukkit.damage.DamageSource;
+import org.bukkit.damage.DamageType;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.projectiles.ProjectileSource;
 
 public class Listeners implements Listener {
 
@@ -18,10 +23,10 @@ public class Listeners implements Listener {
     public void onPlayerDeath(PlayerDeathEvent event) {
         Player player = event.getPlayer();
 
-        // check if the reason this event was called was an Assassin "getting killed" for failing to kill someone.
-        if (deathWasAssassinFail(player, event.getDamageSource())) {event.setDeathMessage("§4" + player.name() + " has failed to kill someone."); return;}
-
         registerPlayerDeath(player);
+
+        // check if the reason this event was called was an Assassin "getting killed" for failing to kill someone.
+        if (deathWasAssassinFail(player, event.getDamageSource())) {event.setDeathMessage("§4" + player.getName() + " has failed to kill someone."); return;}
 
         // prevent killer getting punished if there are only 2 players left alive
         if (Assassins.GAMESTATE == Gamestates.DUELING) {return;}
@@ -37,11 +42,38 @@ public class Listeners implements Listener {
     }
 
     @EventHandler
+    public void onPlayerVersusPlayer(EntityDamageByEntityEvent event) {
+        if (!bothEntitiesArePlayers(event.getDamager(), event.getEntity()) || Assassins.GAMESTATE != Gamestates.GRACE) {return;}
+        event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onTNTHitPlayer(EntityDamageByEntityEvent event) {
+        if (!entityIsTNT(event.getDamager()) || !entityIsPlayer(event.getEntity()) || Assassins.GAMESTATE != Gamestates.GRACE) {return;}
+        event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onProjectileHit(ProjectileHitEvent event) {
+        if (!playerHitPlayerWithProjectile(event.getEntity(), event.getHitEntity().getType()) || Assassins.GAMESTATE != Gamestates.GRACE) {return;}
+        event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onPotionSplash(PotionSplashEvent event) {
+        if (!playerThrewProjectile(event.getPotion()) || Assassins.GAMESTATE != Gamestates.GRACE) {return;}
+
+        event.getAffectedEntities().forEach(p -> {
+            if (p.getType() == EntityType.PLAYER) {event.setIntensity(p, 0);}
+        });
+    }
+
+    @EventHandler
     public void onCompassClick(PlayerInteractEvent event) {
         Player player = event.getPlayer();
 
         // prevents target changing when there are only 2 players alive
-        if (Assassins.GAMESTATE != Gamestates.DUELING) {return;}
+        if (Assassins.GAMESTATE == Gamestates.DUELING) {return;}
 
         // ignores if the player is not holding the tracker or the action was not a right click
         if (!actionWasRightClick(event.getAction()) || !playerIsHoldingTracker(player)) {return;}
@@ -51,7 +83,7 @@ public class Listeners implements Listener {
     }
 
     private static boolean deathWasAssassinFail(Player player, DamageSource damageSource) {
-        return damageSource == Gamestate.getCustomDamageSource(player);
+        return damageSource.getDamageType() == DamageType.THORNS && damageSource.getCausingEntity() == player && damageSource.getDirectEntity() == player;
     }
 
     private static boolean assassinKillOrDeath(Player killed, Player killer) {
@@ -66,10 +98,29 @@ public class Listeners implements Listener {
         return action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK;
     }
 
+    private static boolean entityIsPlayer(Entity entity) {
+        return entity.getType() == EntityType.PLAYER;
+    }
+
+    private static boolean bothEntitiesArePlayers(Entity damager, Entity hit) {
+        return entityIsPlayer(damager) && entityIsPlayer(hit);
+    }
+
+    private static boolean entityIsTNT(Entity entity) {
+        return entity.getType() == EntityType.TNT || entity.getType() == EntityType.TNT_MINECART;
+    }
+
+    private static boolean playerThrewProjectile(Projectile projectile) {
+        return projectile.getShooter() instanceof Player;
+    }
+
+    private static boolean playerHitPlayerWithProjectile(Projectile projectile, EntityType hitEntity) {
+        return playerThrewProjectile(projectile) && hitEntity == EntityType.PLAYER;
+    }
+
     private static void registerPlayerDeath(Player player) {
         player.setGameMode(GameMode.SPECTATOR);                      // set player to spectator if they die
         Assassins.PARTICIPANTS.remove(player);                       // remove player from participants list
-        Assassins.TEAMPARTICIPANTS.removePlayer(player);             // remove player from the team made of participants
     }
 
     private static void punishKiller(Player killer) {

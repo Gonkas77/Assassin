@@ -26,8 +26,6 @@ public final class Assassins extends JavaPlugin {
     public static Gamestates STATEBEFOREPAUSE = Gamestates.NOTSTARTED;
 
     public static ArrayList<World> WORLDS;
-    public static ScoreboardManager SCOREBOARDMANAGER;
-    public static Scoreboard SCOREBOARD;
 
     public static ArrayList<Player> PARTICIPANTS = new ArrayList<>();
     public static Player ASSASSIN = null;
@@ -38,7 +36,6 @@ public final class Assassins extends JavaPlugin {
 
     public static ArrayList<Player> PRINTTIMERFOR = new ArrayList<>();
 
-    public static Team TEAMPARTICIPANTS;
     public static HashMap<Player, Location> PARTICIPANTLOCATIONS = new HashMap<>();
     public static HashMap<GameRule<Boolean>, Boolean> PAUSEGAMERULES = Game.getPausedRules();
 
@@ -48,8 +45,6 @@ public final class Assassins extends JavaPlugin {
         CONSOLE = Bukkit.getConsoleSender();
 
         WORLDS = (ArrayList<World>) Bukkit.getWorlds();
-        SCOREBOARDMANAGER = Bukkit.getScoreboardManager();
-        SCOREBOARD = SCOREBOARDMANAGER.getNewScoreboard();
 
         Bukkit.getPluginManager().registerEvents(new Listeners(), this);
 
@@ -65,8 +60,9 @@ public final class Assassins extends JavaPlugin {
         getCommand("getassassin").setExecutor(new GetAssassinCommand());
         getCommand("getparticipants").setExecutor(new ParticipantListCommand());
 
-        getCommand("printtimers").setExecutor(new PrintTimersCommand());
+        getCommand("settimer").setExecutor(new SetTimerCommand());
         getCommand("decrementtimer").setExecutor(new DecrementTimerCommand());
+        getCommand("printtimers").setExecutor(new PrintTimersCommand());
 
 
         getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
@@ -101,14 +97,14 @@ public final class Assassins extends JavaPlugin {
         getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
             switch (GAMESTATE) {
 
-                case HUNTING -> ASSASSIN.setCompassTarget(getTarget().getLocation());
+                case HUNTING -> ASSASSIN.setCompassTarget(getExactLocation(getTarget()));
 
                 case DUELING -> {
                     Player duelist1 = PARTICIPANTS.get(0);
                     Player duelist2 = PARTICIPANTS.get(1);
 
-                    duelist1.setCompassTarget(duelist2.getLocation());
-                    duelist2.setCompassTarget(duelist1.getLocation());
+                    duelist1.setCompassTarget(getExactLocation(duelist2));
+                    duelist2.setCompassTarget(getExactLocation(duelist1));
                 }
 
                 case PAUSED -> {
@@ -130,10 +126,10 @@ public final class Assassins extends JavaPlugin {
     }
 
 
-
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+        CONSOLE.sendMessage("The gamestate before server stop was: " + Assassins.GAMESTATE.name());
+        CONSOLE.sendMessage("The timer before server stop was: " + TIMER.getTime());
     }
 
     public static void sendServerChat(String msg) {
@@ -152,7 +148,11 @@ public final class Assassins extends JavaPlugin {
 
     public static Player getTarget() {
         if (TARGET >= PARTICIPANTS.size()) {TARGET = 0;}
-        if (Assassins.PARTICIPANTS.get(Assassins.TARGET) == Assassins.ASSASSIN) {Assassins.TARGET++;}
+        if (PARTICIPANTS.get(TARGET) == ASSASSIN) {TARGET++;}
         return PARTICIPANTS.get(TARGET);
+    }
+
+    public static Location getExactLocation(Player player) {
+        return new Location(player.getWorld(), player.getX(), player.getY(), player.getZ());
     }
 }

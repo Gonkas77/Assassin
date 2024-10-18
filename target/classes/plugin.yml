@@ -1,5 +1,5 @@
 name: Assassins
-version: '0.0.9-beta'
+version: '0.0.1'
 main: me.gonkas.assassin.Assassins
 api-version: '1.21'
 commands:

@@ -22,6 +22,10 @@ public class Timer {
         this.msg = timer.msg;
     }
 
+    public void setTime(int time) {
+        this.time = time;
+    }
+
     public void decrementTimer(boolean announceNewTime) {
         this.time--;
         if (announceNewTime) {announceTime();}
@@ -48,7 +52,7 @@ public class Timer {
         }
     }
 
-    private void endTimer() {
+    public void endTimer() {
         Assassins.sendServerChat("§cThe §l" + this.name + "§r§c Period has ended! " + this.msg);
         Assassins.playServerSound(Sound.ENTITY_PLAYER_LEVELUP, SoundCategory.MASTER, 1.0f, 0.7f);
     }
@@ -99,7 +103,7 @@ public class Timer {
 
     private FireworkMeta getRandomFireworkMeta(FireworkMeta meta) {
         meta.addEffect(getRandomFireworkEffect());
-        meta.setPower((new Random()).nextInt(10, 30));
+        meta.setPower((new Random()).nextInt(2, 5));
         return meta;
     }
 
