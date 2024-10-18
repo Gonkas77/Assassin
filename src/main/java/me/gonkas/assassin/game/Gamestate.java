@@ -17,35 +17,45 @@ public class Gamestate {
 
         Assassins.TIMER = new Timer(Timers.HUNT);
 
-        TEAMPARTICIPANTS.setAllowFriendlyFire(true);
+        Assassins.TEAMPARTICIPANTS.setAllowFriendlyFire(true);
         Assassins.GAMESTATE = Gamestates.HUNTING;
     }
 
     public static void graceToDueling() {
 
-        Assassins.sendServerChat("§eThere are now only 2 players left! Who will be the last player standing?");
+        Assassins.sendServerChat("§cThere are now only 2 players left! Who will be the last player standing?");
         Assassins.PARTICIPANTS.forEach(p -> {
                     p.sendMessage("§4Kill your final opponent.");
-                    p.getInventory().addItem(TRACKER);
+                    p.getInventory().addItem(Assassins.TRACKER);
         });
 
-        TEAMPARTICIPANTS.setAllowFriendlyFire(true);
+        Assassins.TEAMPARTICIPANTS.setAllowFriendlyFire(true);
         Assassins.GAMESTATE = Gamestates.DUELING;
     }
 
     public static void huntingToGrace(boolean killAssassin) {
-        if (killAssassin) {Assassins.ASSASSIN.damage(Double.MAX_VALUE, getCustomDamageSource(Assassins.ASSASSIN));}
+        if (killAssassin) {Assassins.ASSASSIN.damage(1000, getCustomDamageSource(Assassins.ASSASSIN));}
 
-        Assassins.sendServerChat("§cThis round the Assassin was §4" + Assassins.ASSASSIN.name() + "§c.");
+        Assassins.sendServerChat("§cThis round the Assassin was §4" + Assassins.ASSASSIN.getName() + "§c.");
 
         Assassins.TIMER = new Timer(Timers.GRACE);
         Game.rollNewAssassin(false);
 
-        TEAMPARTICIPANTS.setAllowFriendlyFire(false);
+        Assassins.TEAMPARTICIPANTS.setAllowFriendlyFire(false);
         Assassins.GAMESTATE = Gamestates.GRACE;
     }
 
+    public static void graceToVictory() {
+
+
+    }
+
+    public static void duelingToVictory() {
+
+
+    }
+
     public static DamageSource getCustomDamageSource(Player player) {
-        return DamageSource.builder(DamageType.THORNS).withCausingEntity(player).build();
+        return DamageSource.builder(DamageType.THORNS).withCausingEntity(player).withDirectEntity(player).build();
     }
 }

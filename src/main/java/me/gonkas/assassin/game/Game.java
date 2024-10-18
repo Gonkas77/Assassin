@@ -6,9 +6,9 @@ import me.gonkas.assassin.timer.Timers;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scoreboard.Team;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,22 +17,16 @@ import java.util.Random;
 
 public class Game {
 
-    public static ItemStack TRACKER = createTracker();
-    public static Team TEAMPARTICIPANTS;
-
-    public static HashMap<Player, Location> PARTICIPANTLOCATIONS = new HashMap<>();
-    public static HashMap<GameRule<Boolean>, Boolean> PAUSEGAMERULES = getPausedRules();
-
     public static HashMap<World, HashMap<GameRule<Boolean>, Boolean>> BOOLEANRULES = new HashMap<>();
     public static HashMap<World, HashMap<GameRule<Integer>, Integer>> INTEGERRULES = new HashMap<>();
 
     public static void startGame() {
 
-        TEAMPARTICIPANTS = Assassins.SCOREBOARD.registerNewTeam("Participants");
+        Assassins.TEAMPARTICIPANTS = Assassins.SCOREBOARD.registerNewTeam("Participants");
         Assassins.PARTICIPANTS = Assassins.getParticipants();
 
-        Assassins.PARTICIPANTS.forEach(p -> TEAMPARTICIPANTS.addPlayer(p)); // put all participants on a team
-        TEAMPARTICIPANTS.setAllowFriendlyFire(false);
+        Assassins.PARTICIPANTS.forEach(p -> Assassins.TEAMPARTICIPANTS.addPlayer(p)); // put all participants on a team
+        Assassins.TEAMPARTICIPANTS.setAllowFriendlyFire(false);
 
         Game.rollNewAssassin(false);
         Assassins.sendServerChat("§eThe Assassins game has started. You have 5 minutes of Grace until an Assassin is selected.");
@@ -62,12 +56,12 @@ public class Game {
             BOOLEANRULES.put(w, getBooleanGameRules(w));
             INTEGERRULES.put(w, getIntegerGameRules(w));
 
-            PAUSEGAMERULES.forEach((w::setGameRule));
+            Assassins.PAUSEGAMERULES.forEach((w::setGameRule));
             w.setGameRule(GameRule.RANDOM_TICK_SPEED, 0);
         });
 
-        Assassins.PARTICIPANTS.forEach(p -> PARTICIPANTLOCATIONS.put(p, p.getLocation()));
-        TEAMPARTICIPANTS.setAllowFriendlyFire(false);
+        Assassins.PARTICIPANTS.forEach(p -> Assassins.PARTICIPANTLOCATIONS.put(p, p.getLocation()));
+        Assassins.TEAMPARTICIPANTS.setAllowFriendlyFire(false);
 
         Assassins.sendServerChat("§aThe game has been paused! Please wait while the Hosts handle the situation.");
         Assassins.STATEBEFOREPAUSE = Assassins.GAMESTATE;
@@ -79,7 +73,7 @@ public class Game {
         BOOLEANRULES.forEach((w, e) -> e.forEach(w::setGameRule));
         INTEGERRULES.forEach((w, e) -> e.forEach(w::setGameRule));
 
-        TEAMPARTICIPANTS.setAllowFriendlyFire(true);
+        Assassins.TEAMPARTICIPANTS.setAllowFriendlyFire(true);
 
         Assassins.sendServerChat("§aThe game has been resumed.");
         Assassins.GAMESTATE = Assassins.STATEBEFOREPAUSE;
@@ -90,7 +84,7 @@ public class Game {
 
         ArrayList<Player> participants = new ArrayList<>(Assassins.getParticipants());
         if (lastAssassin != null) {
-            lastAssassin.getInventory().remove(TRACKER);
+            lastAssassin.getInventory().remove(createTracker());
             participants.remove(lastAssassin);
         }
 
@@ -102,7 +96,7 @@ public class Game {
 
     // forces a player as an assassin
     public static void rollNewAssassin(Player player, boolean updateAssassin) {
-        Assassins.ASSASSIN.getInventory().remove(TRACKER);
+        Assassins.ASSASSIN.getInventory().remove(Assassins.TRACKER);
         Assassins.ASSASSIN = player;
 
         // updates only if it is not grace period
@@ -111,13 +105,22 @@ public class Game {
 
     public static void updateAssassin() {
         Assassins.ASSASSIN.sendMessage("§cYou are the new Assassin! Kill someone within 15 minutes.");
-        Assassins.ASSASSIN.getInventory().addItem(TRACKER);    // give tracker to assassin
+        Assassins.ASSASSIN.getInventory().addItem(Assassins.TRACKER);    // give tracker to assassin
     }
 
     public static ItemStack createTracker() {
         ItemStack tracker = ItemStack.of(Material.COMPASS);
-        tracker.getItemMeta().setItemName("Player Tracker");
+        ItemMeta meta = tracker.getItemMeta();
+        meta.setEnchantmentGlintOverride(true);
+        meta.setItemName("Tracker");
+
+        tracker.setItemMeta(meta);
         return tracker;
+    }
+
+    public static boolean isTracker(ItemStack item) {
+        if (item == null || !item.getItemMeta().hasEnchantmentGlintOverride()) {return false;}
+        return item.getType() == Material.COMPASS && item.getItemMeta().getEnchantmentGlintOverride();
     }
 
     public static List<PotionEffect> getPauseEffects() {
@@ -146,7 +149,7 @@ public class Game {
         } return gameRules;
     }
 
-    private static HashMap<GameRule<Boolean>, Boolean> getPausedRules() {
+    public static HashMap<GameRule<Boolean>, Boolean> getPausedRules() {
         HashMap<GameRule<Boolean>, Boolean> rules = new HashMap<>();
         rules.put(GameRule.DO_DAYLIGHT_CYCLE,              false);
         rules.put(GameRule.DO_FIRE_TICK,                   false);

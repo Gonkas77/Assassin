@@ -5,5 +5,6 @@ public enum Gamestates {
     HUNTING,
     DUELING,
     PAUSED,
-    NOTSTARTED
+    NOTSTARTED,
+    VICTORY
 }
