@@ -3,6 +3,8 @@ package me.gonkas.assassin.game;
 import me.gonkas.assassin.Assassins;
 import me.gonkas.assassin.timer.Timer;
 import me.gonkas.assassin.timer.Timers;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
 import org.bukkit.damage.DamageSource;
 import org.bukkit.damage.DamageType;
 import org.bukkit.entity.Player;
@@ -26,6 +28,13 @@ public class Gamestate {
         Assassins.sendServerChat("§cThere are now only 2 players left! Who will be the last player standing?");
         Assassins.PARTICIPANTS.forEach(p -> {
                     p.sendMessage("§4Kill your final opponent.");
+                    p.playSound(
+                            p,
+                            Sound.ITEM_TRIDENT_THUNDER,
+                            SoundCategory.MASTER,
+                            0.8f,
+                            1.2f
+                    );
                     p.getInventory().addItem(Assassins.TRACKER);
         });
 
@@ -47,12 +56,14 @@ public class Gamestate {
 
     public static void graceToVictory() {
 
+        Assassins.sendServerChat("§aPlayer §2" + Assassins.PARTICIPANTS.getFirst().getName() + "§a is the last one standing!");
 
+        Assassins.TIMER = new Timer(Timers.VICTORY);
+        Assassins.GAMESTATE = Gamestates.VICTORY;
     }
 
     public static void duelingToVictory() {
-
-
+        graceToVictory();
     }
 
     public static DamageSource getCustomDamageSource(Player player) {

@@ -104,7 +104,15 @@ public class Game {
     }
 
     public static void updateAssassin() {
+        Assassins.ASSASSIN.sendTitle("§cAssassin!", "Kill someone within 15 minutes.", 10, 30, 10);
         Assassins.ASSASSIN.sendMessage("§cYou are the new Assassin! Kill someone within 15 minutes.");
+        Assassins.ASSASSIN.playSound(
+                Assassins.ASSASSIN,
+                Sound.ENTITY_WITHER_SPAWN,
+                SoundCategory.MASTER,
+                0.8f,
+                1.0f
+        );
         Assassins.ASSASSIN.getInventory().addItem(Assassins.TRACKER);    // give tracker to assassin
     }
 

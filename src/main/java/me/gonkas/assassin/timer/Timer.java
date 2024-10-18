@@ -1,14 +1,13 @@
 package me.gonkas.assassin.timer;
 
 import me.gonkas.assassin.Assassins;
-import org.bukkit.Location;
-import org.bukkit.Sound;
-import org.bukkit.SoundCategory;
-import org.bukkit.World;
+import org.bukkit.*;
+import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.util.Vector;
 
-import java.util.Arrays;
 import java.util.Random;
 
 public class Timer {
@@ -55,31 +54,97 @@ public class Timer {
     }
 
     private void spawnFirework(Player player) {
-        World world = player.getWorld();
-        world.spawn()
+        player.getWorld().spawn(
+                getRandomFireworkLocation(player),
+                Firework.class,
+                CreatureSpawnEvent.SpawnReason.CUSTOM,
+                (it) -> it.setFireworkMeta(getRandomFireworkMeta(it.getFireworkMeta()))
+                );
     }
 
-    private void getRandomFireworkLocation(Player player) {
-        Location origin = player.getLocation();
-        Location[] possibleLocations = new Location[8];
-
-        for (int i=0; i < 8; i++) {
-            double yaw = origin.getDirection().getX();
-        }
-
-        Random random = new Random();
+    private Location getRandomFireworkLocation(Player player) {
+        int offset = (new Random()).nextInt(8);
+        return getNextPosition(player.getLocation(), offset);
     }
 
-    private int getCardinalDirection(double yaw) {
+    private Location getNextPosition(Location origin, int offset) {
         int[] directions = {0, 90, 180, -90};
         double[] distances = new double[4];
 
-        for (int i=0; i < 4; i++) {distances[i] = Math.abs(yaw - directions[i]);}
+        double yaw = origin.getDirection().getX();
+        yaw += 45*offset;
+
+        for (int i=0; i < 4; i++) {distances[i] = yaw - Math.abs(directions[i]);}
 
         int indiceMenorValor = 0;
-        for (int i=0; i < 4; i++) {
-            if (distances[i] < distances[indiceMenorValor]) {}
+        for (int i=0; i < 4; i++) {if (Math.abs(distances[i]) < Math.abs(distances[indiceMenorValor])) {indiceMenorValor = i;}}
+
+        double angle = distances[indiceMenorValor];
+        double adjacentSide = Math.cos(angle)*3;
+        double oppositeSide = Math.sin(angle)*3;
+
+        Vector vector = new Vector();
+
+        // Z axis else X axis
+        if (directions[indiceMenorValor] == 0 || directions[indiceMenorValor] == 180) {
+            vector.setZ(adjacentSide);
+            vector.setX(oppositeSide);
+        } else {
+            vector.setX(adjacentSide);
+            vector.setZ(oppositeSide);
         }
+
+        return origin.add(vector);
+    }
+
+    private FireworkMeta getRandomFireworkMeta(FireworkMeta meta) {
+        meta.addEffect(getRandomFireworkEffect());
+        meta.setPower((new Random()).nextInt(10, 30));
+        return meta;
+    }
+
+    private FireworkEffect getRandomFireworkEffect() {
+        FireworkEffect.Builder builder = FireworkEffect.builder();
+        builder.with(getRandomFireworkType());
+        builder.withColor(getRandomFireworkColors());
+        builder.withFade(getRandomFireworkColors());
+
+        Random random = new Random();
+        if (random.nextBoolean()) {builder.withFlicker();}
+        if (random.nextBoolean()) {builder.withTrail();}
+
+        return builder.build();
+    }
+
+    private FireworkEffect.Type getRandomFireworkType() {
+        return FireworkEffect.Type.values()[(new Random()).nextInt(4)];
+    }
+
+    private Color[] getRandomFireworkColors() {
+        Random random = new Random();
+        int numberOfColors = (int) random.nextGaussian(2, 1.5);
+
+        Color[] colors = new Color[numberOfColors];
+        for (int i=0; i < numberOfColors; i++) {
+            switch (random.nextInt(numberOfColors)) {
+                case 0 -> colors[i] = DyeColor.BLACK.getColor();
+                case 1 -> colors[i] = DyeColor.BLUE.getColor();
+                case 2 -> colors[i] = DyeColor.BROWN.getColor();
+                case 3 -> colors[i] = DyeColor.CYAN.getColor();
+                case 4 -> colors[i] = DyeColor.GRAY.getColor();
+                case 5 -> colors[i] = DyeColor.GREEN.getColor();
+                case 6 -> colors[i] = DyeColor.LIGHT_BLUE.getColor();
+                case 7 -> colors[i] = DyeColor.LIGHT_GRAY.getColor();
+                case 8 -> colors[i] = DyeColor.LIME.getColor();
+                case 9 -> colors[i] = DyeColor.MAGENTA.getColor();
+                case 10 -> colors[i] = DyeColor.ORANGE.getColor();
+                case 11 -> colors[i] = DyeColor.PINK.getColor();
+                case 12 -> colors[i] = DyeColor.PURPLE.getColor();
+                case 13 -> colors[i] = DyeColor.RED.getColor();
+                case 14 -> colors[i] = DyeColor.YELLOW.getColor();
+                case 15 -> colors[i] = DyeColor.WHITE.getColor();
+            }
+        } return colors;
     }
 
     public String getName() {return name;}
