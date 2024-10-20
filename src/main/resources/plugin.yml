@@ -25,3 +25,5 @@ commands:
     default: false
   decrementtimer:
     default: false
+  settimer:
+    default: false
